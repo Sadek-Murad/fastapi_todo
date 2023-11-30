@@ -12,5 +12,6 @@ USE todo;
 CREATE TABLE IF NOT EXISTS items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     description VARCHAR(255) NOT NULL,
-    status ENUM('open', 'in progress', 'finished') NOT NULL DEFAULT 'open');
+    status VARCHAR(255) NOT NULL DEFAULT 'open'
+    );
            

@@ -9,10 +9,10 @@ from mysql.connector import Error
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-class TodoItem(BaseModel):
-    description: str
-    id: int = None 
-    status: str 
+#class TodoItem(BaseModel):
+    #description: str
+    #id: int = None 
+    #status: str 
 
 DB_USER = "todo"
 DB_PASSWORD = "1234"
@@ -37,23 +37,26 @@ async def read_index(request: Request):
         cnx.close()
         return templates.TemplateResponse("index.html", {"request": request, "items": items})
 
+def insertIntoDB(cnx, description):
+  
+  print("######", cnx)
+  cursor = cnx.cursor()
+    
+  sql = "INSERT INTO items (description) VALUES (%s);"
+  data = [description]
+  print(sql) 
+  print(data)
+  cursor.execute(sql, data)
+  cnx.commit()
+    
 
-@app.post("/", response_class=RedirectResponse)
+
+@app.post("/additem", response_class=RedirectResponse)
 def create_todo(description: Annotated[str, Form()]):
     cnx = get_database_connection()
-    print("######", cnx)
-    cursor = cnx.cursor()
-    
-    sql = "INSERT INTO items (description) VALUES (%s);"
-    data =description
-    print(sql) 
-    print(data)
-    cursor.execute(sql, data)
-    
-    cnx.commit()
-    
-    cursor.close()
-    cnx.close()
+    insertIntoDB(cnx, description)
+    #cursor.close()
+    #cnx.close()
     return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
 
     
