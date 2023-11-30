@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Form, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 import mysql.connector
+from typing import Annotated
 from mysql.connector import Error
 
 app = FastAPI()
@@ -15,77 +17,76 @@ class TodoItem(BaseModel):
 DB_USER = "todo"
 DB_PASSWORD = "1234"
 DB_HOST = "127.0.0.1"
-DB_DATABASE = "TODO"
+DB_DATABASE = "todo"
 
-def create_database():
-    
-        cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
-        cursor = cnx.cursor()
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-    
-create_database()
 
 def get_database_connection():
-    return mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
+    cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
+    return cnx
 
 
 @app.get("/")
 async def read_index(request: Request):
    
-        cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
+        cnx = get_database_connection()
         cursor = cnx.cursor()
         select_sql = "SELECT * FROM items;"
         cursor.execute(select_sql)
         items = cursor.fetchall()
         cursor.close()
         cnx.close()
-        return templates.TemplateResponse("index.html", {"request": request})
+        return templates.TemplateResponse("index.html", {"request": request, "items": items})
 
 
-@app.post("/todos/")
-async def create_todo(todo: TodoItem):
-   
-        cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
-        cursor = cnx.cursor()
-        
-        sql = "INSERT INTO items (description, status) VALUES (%s, %s)"
-        cursor.execute(sql, (todo.description, todo.status))
+@app.post("/", response_class=RedirectResponse)
+def create_todo(description: Annotated[str, Form()]):
+    cnx = get_database_connection()
+    print("######", cnx)
+    cursor = cnx.cursor()
+    
+    sql = "INSERT INTO items (description) VALUES (%s);"
+    data =description
+    print(sql) 
+    print(data)
+    cursor.execute(sql, data)
+    
+    cnx.commit()
+    
+    cursor.close()
+    cnx.close()
+    return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
 
-        cnx.commit()
-        new_todo_id = cursor.lastrowid
-        cursor.close()
-        cnx.close()
-        return {"id": new_todo_id, "description": todo.description, "status": todo.status}
     
 
 @app.post("/delete")
-async def delete_todo(todo: TodoItem):
+async def delete_todo(todo_id: int):
     
-        cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
+        cnx = get_database_connection()
         cursor = cnx.cursor()
 
         sql = "DELETE FROM items WHERE id = %s;"
-        cursor.execute(sql, (id,))
+        cursor.execute(sql, (todo_id,))
 
         cnx.commit()
         cursor.close()
         cnx.close()
-        return {"message": "Todo item deleted successfully"}
+        return {"message": "Todo-Eintrag erfolgreich gelöscht"}
 
 @app.post("/update")
-async def update_todo(todo: TodoItem):
+async def update_todo(todo_id: int, new_status: str):
     
-        cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
-        cursor = cnx.cursor()
+    cnx = get_database_connection()
+    cursor = cnx.cursor()
 
-        sql = "UPDATE items SET description = %s, status = %s WHERE id = %s;"
-        cursor.execute(sql, (todo.description, todo.status, todo.id))
+    sql = "UPDATE items SET description = %s, status = %s WHERE id = %s;"
+    cursor.execute(sql, (new_status, todo_id))
 
-        cnx.commit()
-        cursor.close()
-        cnx.close()
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+    
+    return {"message": "Status des Todo-Eintrags erfolgreich aktualisiert"}
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -6,11 +6,6 @@ GRANT ALL PRIVILEGES ON todo.* TO 'todo'@'localhost';
 
 FLUSH PRIVILEGES;
 
-
-
-
-CREATE DATABASE IF NOT EXISTS todo;
-
 USE todo;
 
 
