@@ -78,20 +78,33 @@ def delete_todo(id: Annotated[int, Form()]):
         cnx.close()
         return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
 
-@app.post("/update")
-async def update_todo(todo_id: int, new_status: str):
-    
+@app.post("/update", response_class=RedirectResponse)
+def update_todo(id: Annotated[int, Form()]):
     cnx = get_database_connection()
     cursor = cnx.cursor()
+    
+    neuer_status_in_progress = 'in progress'
+    
+    sql = """
+    UPDATE items
+    SET status = CASE
+        WHEN status = 'open' THEN 'in progress'
+        WHEN status = 'in progress' THEN 'finished'
+        ELSE status
+    END
+    WHERE id = %s;
+    """
+    
+    cursor.execute(sql, (id,))
 
-    sql = "UPDATE items SET description = %s, status = %s WHERE id = %s;"
-    cursor.execute(sql, (new_status, todo_id))
-
+    
+    
     cnx.commit()
     cursor.close()
     cnx.close()
     
-    return {"message": "Status des Todo-Eintrags erfolgreich aktualisiert"}
+    return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
+
 
 
 if __name__ == "__main__":
