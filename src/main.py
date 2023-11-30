@@ -39,7 +39,7 @@ async def read_index(request: Request):
 
 def insertIntoDB(cnx, description):
   
-  print("######", cnx)
+  
   cursor = cnx.cursor()
     
   sql = "INSERT INTO items (description) VALUES (%s);"
@@ -58,22 +58,25 @@ def create_todo(description: Annotated[str, Form()]):
     #cursor.close()
     #cnx.close()
     return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
+    cnx.close()
+    
 
     
 
-@app.post("/delete")
-async def delete_todo(todo_id: int):
+@app.post("/delete", response_class=RedirectResponse)
+def delete_todo(id: Annotated[int, Form()]):
     
         cnx = get_database_connection()
         cursor = cnx.cursor()
 
         sql = "DELETE FROM items WHERE id = %s;"
-        cursor.execute(sql, (todo_id,))
-
+        id = [id]
+        cursor.execute(sql, id)
+        print(id)
         cnx.commit()
         cursor.close()
         cnx.close()
-        return {"message": "Todo-Eintrag erfolgreich gelöscht"}
+        return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
 
 @app.post("/update")
 async def update_todo(todo_id: int, new_status: str):

@@ -22,7 +22,7 @@
                             <form action="/additem" method="post" class="row row-cols-lg-auto g-3 justify-content-center align-items-center mb-4 pb-2">
                                 <div class="col-12">
                                     <div class="form-outline">
-                                        <input type="text" id="item" class="form-control" name="item"
+                                        <input type="text" id="item" class="form-control" name="description"
                                             placeholder="Enter task here" />
                                     </div>
                                 </div>
@@ -43,18 +43,18 @@
                                 </thead>
                                 <tbody>
                                     {% if (items is defined) and items %}
-                                    {% for item in items %}
+                                    {% for description in items %}
                                     <tr>
-                                        <th scope="row">{{item[0]}}</th>
-                                        <td>{{item[1]}}</td>
-                                        <td>{{item[2]}}</td>
+                                        <th scope="row">{{description[0]}}</th>
+                                        <td>{{description[1]}}</td>
+                                        <td>{{description[2]}}</td>
                                         <td class="d-flex">
                                             <form class="w-50" action="/delete" method="post">
-                                                <input type="hidden" name="id" value="{{item[0]}}">
+                                                <input type="hidden" name="id" value="{{description[0]}}">
                                                 <button type="submit" class="btn btn-danger">Delete</button>
                                             </form>
                                                 <form class="w-50" action="/update" method="post">
-                                                <input type="hidden" name="id" value="{{item[0]}}">
+                                                <input type="hidden" name="todo_id" value="{{description[0]}}">
                                                 <button type="submit" class="btn btn-success ms-1">Start</button>
                                             </form>
                                         </td>
