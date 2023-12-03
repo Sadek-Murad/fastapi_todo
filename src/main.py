@@ -5,25 +5,35 @@ from fastapi.templating import Jinja2Templates
 import mysql.connector
 from typing import Annotated
 from mysql.connector import Error
+from dotenv import load_dotenv
+from pathlib import Path
+import os
 
+
+
+load_dotenv()
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+
+
+
+
 
 #class TodoItem(BaseModel):
     #description: str
     #id: int = None 
     #status: str 
 
-DB_USER = "todo"
-DB_PASSWORD = "1234"
-DB_HOST = "127.0.0.1"
-DB_DATABASE = "todo"
-
 
 def get_database_connection():
-    cnx = mysql.connector.connect(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, database=DB_DATABASE)
+    cnx = mysql.connector.connect(
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_DATABASE')
+    )
     return cnx
-
 
 @app.get("/")
 async def read_index(request: Request):
@@ -44,8 +54,7 @@ def insertIntoDB(cnx, description):
     
   sql = "INSERT INTO items (description) VALUES (%s);"
   data = [description]
-  print(sql) 
-  print(data)
+  
   cursor.execute(sql, data)
   cnx.commit()
     
@@ -57,7 +66,7 @@ def create_todo(description: Annotated[str, Form()]):
     insertIntoDB(cnx, description)
     #cursor.close()
     #cnx.close()
-    return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
+    return RedirectResponse(url="/", status_code=303)
     cnx.close()
     
 
@@ -70,20 +79,20 @@ def delete_todo(id: Annotated[int, Form()]):
         cursor = cnx.cursor()
 
         sql = "DELETE FROM items WHERE id = %s;"
-        id = [id]
+        
         cursor.execute(sql, id)
-        print(id)
+       
         cnx.commit()
         cursor.close()
         cnx.close()
-        return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
 
 @app.post("/update", response_class=RedirectResponse)
 def update_todo(id: Annotated[int, Form()]):
     cnx = get_database_connection()
     cursor = cnx.cursor()
     
-    neuer_status_in_progress = 'in progress'
+    
     
     sql = """
     UPDATE items
@@ -97,16 +106,16 @@ def update_todo(id: Annotated[int, Form()]):
     
     cursor.execute(sql, (id,))
 
-    
+
     
     cnx.commit()
     cursor.close()
     cnx.close()
     
-    return RedirectResponse(url="http://127.0.0.1:8000", status_code=303)
+    return RedirectResponse(url="/", status_code=303)
 
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=os.getenv('UVICORN_HOST'), port=8000)
